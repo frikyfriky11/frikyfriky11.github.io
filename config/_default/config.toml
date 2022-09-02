@@ -27,10 +27,6 @@ customCSS = []
 customSCSS = []
 customJS = []
 
-[params.matomo]
-siteID = "10"
-serverURL = "matomo.frikydesign.it"
-
 [taxonomies]
 category = "categories"
 series = "series"
