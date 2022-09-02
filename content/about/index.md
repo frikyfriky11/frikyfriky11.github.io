@@ -20,3 +20,5 @@ I also manage my private cloud infrastructure for a modest customer base, for wh
 In the short time I don't have a screen in front of me, I love photographing the world around me and I love listening to metal, rock, pop and house, because I find it reductive to focus on just one genre and one passion.
 
 I discover something new every day and I am never tired of learning, I love to experiment and find solutions to problems that I did not think existed.
+
+If you want to verify something I digitally signed, you can find my public GPG key [here](/keys/public.asc).
