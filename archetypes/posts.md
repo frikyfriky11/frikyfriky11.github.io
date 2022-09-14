@@ -1,8 +1,8 @@
 +++
-date: {{ .Date }}
-title: "{{ replace .Name "-" " " | title }}"
-description: ""
-authors: ["Stefano Previato"]
-tags: [""]
-categories: [""]
+date = {{ .Date }}
+title = "{{ replace .Name "-" " " | title }}"
+description = ""
+authors = ["Stefano Previato"]
+tags = [""]
+categories = [""]
 +++
