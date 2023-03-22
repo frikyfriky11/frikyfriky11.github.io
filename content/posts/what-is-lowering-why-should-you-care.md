@@ -7,7 +7,7 @@ tags = ["lowering", "compilers", "SharpLab", "C#", "performance", "high level la
 categories = ["C#", "Compilers"]
 +++
 
-Nowadays we're all writing highly understable code (_or at least that's what I'm telling my coworkers!_) in high level languages, almost completely forgetting what those pieces of code are translated to once they are compiled or interpreted.
+Nowadays we're all writing highly understandable code (_or at least that's what I'm telling my coworkers!_) in high level languages, almost completely forgetting what those pieces of code are translated to once they are compiled or interpreted.
 
 Back in the day, people used to punch holes into cards to represent bits as instructions for the CPU, then they invented low level languages, then high level languages, and now we even have high level languages that transpile to other high level languages instead of compiling them (think of TypeScript to JavaScript for example).
 
