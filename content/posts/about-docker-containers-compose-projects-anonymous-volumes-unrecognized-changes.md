@@ -1,6 +1,6 @@
 +++
 date = 2023-11-21T23:22:39+01:00
-title = "About Docker Containers Compose Projects Anonymous Volumes Unrecognized Changes"
+title = "About Docker containers, compose projects, anonymous volumes and unrecognized changes"
 description = "The VOLUME directive in Dockerfiles can trick you into thinking your deploy pipeline will work as expected when in fact could end up not updating anything at all."
 authors = ["Stefano Previato"]
 tags = ["Docker", "volumes", "deploy", "pipeline"]
