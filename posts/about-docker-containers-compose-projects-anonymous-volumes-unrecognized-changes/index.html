@@ -1,0 +1,127 @@
+<!doctype html><html lang=en><head><title>About Docker Containers Compose Projects Anonymous Volumes Unrecognized Changes · frikyfriky11
+</title><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=color-scheme content="light dark"><meta name=author content="Stefano Previato"><meta name=description content="The VOLUME directive in Dockerfiles can trick you into thinking your deploy pipeline will work as expected when in fact could end up not updating anything at all."><meta name=keywords content="blog,developer,personal,software engineer"><meta name=twitter:card content="summary"><meta name=twitter:title content="About Docker Containers Compose Projects Anonymous Volumes Unrecognized Changes"><meta name=twitter:description content="The VOLUME directive in Dockerfiles can trick you into thinking your deploy pipeline will work as expected when in fact could end up not updating anything at all."><meta property="og:title" content="About Docker Containers Compose Projects Anonymous Volumes Unrecognized Changes"><meta property="og:description" content="The VOLUME directive in Dockerfiles can trick you into thinking your deploy pipeline will work as expected when in fact could end up not updating anything at all."><meta property="og:type" content="article"><meta property="og:url" content="https://frikyfriky11.github.io/posts/about-docker-containers-compose-projects-anonymous-volumes-unrecognized-changes/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2023-11-21T23:22:39+01:00"><meta property="article:modified_time" content="2023-11-21T23:22:39+01:00"><link rel=canonical href=https://frikyfriky11.github.io/posts/about-docker-containers-compose-projects-anonymous-volumes-unrecognized-changes/><link rel=preload href="/fonts/forkawesome-webfont.woff2?v=1.2.0" as=font type=font/woff2 crossorigin><link rel=stylesheet href=/css/coder.min.c4d7e93a158eda5a65b3df343745d2092a0a1e2170feeec909b8a89443903c6a.css integrity="sha256-xNfpOhWO2lpls980N0XSCSoKHiFw/u7JCbiolEOQPGo=" crossorigin=anonymous media=screen><link rel=stylesheet href=/css/coder-dark.min.39e41a7f16bdf8cb16e43cae7d714fa1016f1d2d2898a5b3f27f42c9979204e2.css integrity="sha256-OeQafxa9+MsW5DyufXFPoQFvHS0omKWz8n9CyZeSBOI=" crossorigin=anonymous media=screen><link rel=icon type=image/png href=/images/favicon-32x32.png sizes=32x32><link rel=icon type=image/png href=/images/favicon-16x16.png sizes=16x16><link rel=apple-touch-icon href=/images/apple-touch-icon.png><link rel=apple-touch-icon sizes=180x180 href=/images/apple-touch-icon.png><link rel=manifest href=/site.webmanifest><link rel=mask-icon href=/images/safari-pinned-tab.svg color=#5bbad5><meta name=generator content="Hugo 0.120.4"></head><body class="preload-transitions colorscheme-auto"><div class=float-container><a id=dark-mode-toggle class=colorscheme-toggle><i class="fa fa-adjust fa-fw" aria-hidden=true></i></a></div><main class=wrapper><nav class=navigation><section class=container><a class=navigation-title href=/>frikyfriky11
+</a><input type=checkbox id=menu-toggle>
+<label class="menu-button float-right" for=menu-toggle><i class="fa fa-bars fa-fw" aria-hidden=true></i></label><ul class=navigation-list><li class=navigation-item><a class=navigation-link href=/posts/>Posts</a></li><li class=navigation-item><a class=navigation-link href=/categories/>Categories</a></li><li class=navigation-item><a class=navigation-link href=/tags/>Tags</a></li><li class=navigation-item><a class=navigation-link href=/about/>About me</a></li></ul></section></nav><div class=content><section class="container post"><article><header><div class=post-title><h1 class=title><a class=title-link href=https://frikyfriky11.github.io/posts/about-docker-containers-compose-projects-anonymous-volumes-unrecognized-changes/>About Docker Containers Compose Projects Anonymous Volumes Unrecognized Changes</a></h1></div><div class=post-meta><div class=date><span class=posted-on><i class="fa fa-calendar" aria-hidden=true></i>
+<time datetime=2023-11-21T23:22:39+01:00>November 21, 2023
+</time></span><span class=reading-time><i class="fa fa-clock-o" aria-hidden=true></i>
+7-minute read</span></div><div class=authors><i class="fa fa-user" aria-hidden=true></i>
+<a href=/authors/stefano-previato/>Stefano Previato</a></div><div class=categories><i class="fa fa-folder" aria-hidden=true></i>
+<a href=/categories/docker/>Docker</a></div><div class=tags><i class="fa fa-tag" aria-hidden=true></i>
+<span class=tag><a href=/tags/docker/>Docker</a>
+</span><span class=separator>•</span>
+<span class=tag><a href=/tags/volumes/>volumes</a>
+</span><span class=separator>•</span>
+<span class=tag><a href=/tags/deploy/>deploy</a>
+</span><span class=separator>•</span>
+<span class=tag><a href=/tags/pipeline/>pipeline</a></span></div></div></header><div><p>Today I spent a couple of hours trying to help a Data Engineering coworker find some nasty bug that was in hiding into one of our company workloads that are deployed using Docker.</p><h2 id=tldr>TLDR
+<a class=heading-link href=#tldr><i class="fa fa-link" aria-hidden=true title="Link to heading"></i>
+<span class=sr-only>Link to heading</span></a></h2><p>A Docker deployment bug caused files not to update despite successful builds. It stemmed from an inherited VOLUME directive creating an anonymous volume, persisting changes. Solution: Add <code>docker compose down -v</code> in the deployment pipeline before <code>docker compose up</code>.</p><h2 id=the-scenario>The scenario
+<a class=heading-link href=#the-scenario><i class="fa fa-link" aria-hidden=true title="Link to heading"></i>
+<span class=sr-only>Link to heading</span></a></h2><p>We have a GitLab repository that hosts a dbt project (it&rsquo;s not important <a href=https://www.getdbt.com/>what dbt is</a>, but if you&rsquo;re interested it&rsquo;s a data tool that Data engineers use, and I don&rsquo;t know anything about it), with the following <code>Dockerfile</code>:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Dockerfile data-lang=Dockerfile><span style=display:flex><span><span style=color:#ff79c6>FROM</span><span style=color:#f1fa8c> ghcr.io/dbt-labs/dbt-core:1.4.1 as build</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#6272a4># ...</span>
+</span></span><span style=display:flex><span><span style=color:#6272a4># some RUN commands to install dependencies and whatnot, not relevant for our scenario</span>
+</span></span><span style=display:flex><span><span style=color:#6272a4># ...</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#ff79c6>WORKDIR</span><span style=color:#f1fa8c> /usr/app</span>
+</span></span><span style=display:flex><span><span style=color:#ff79c6>COPY</span> ourproject/ .
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#6272a4># ...</span>
+</span></span><span style=display:flex><span><span style=color:#6272a4># some other stuff copied over</span>
+</span></span><span style=display:flex><span><span style=color:#6272a4># ...</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#ff79c6>RUN</span> dbt deps
+</span></span><span style=display:flex><span><span style=color:#ff79c6>RUN</span> dbt debug -t live
+</span></span></code></pre></div><p>Seems simple enough to understand, even to somebody like me who has never done data stuff in their life.</p><p>Here&rsquo;s the <code>docker-compose.yml</code> file that spins this stuff up:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=display:flex><span><span style=color:#ff79c6>services</span>:
+</span></span><span style=display:flex><span>  <span style=color:#ff79c6>app</span>:
+</span></span><span style=display:flex><span>    <span style=color:#ff79c6>image</span>: ourfancyregistry.lan/dbtstuff:latest
+</span></span><span style=display:flex><span>    <span style=color:#ff79c6>restart</span>: <span style=color:#ff79c6>no</span>
+</span></span><span style=display:flex><span>    <span style=color:#ff79c6>entrypoint</span>:
+</span></span><span style=display:flex><span>      - /bin/bash
+</span></span><span style=display:flex><span>      - -c
+</span></span><span style=display:flex><span>      - dbt run -t live
+</span></span></code></pre></div><p>Here&rsquo;s the <code>Jenkinsfile</code> pipeline that builds and deploys this stuff:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>node(&#34;linux-docker&#34;) {
+</span></span><span style=display:flex><span>  def gitData = checkout([$class: &#39;GitSCM&#39;, branches: [[name: &#39;*/live&#39;]], extensions: [], userRemoteConfigs: [[credentialsId: &#39;JenkinsGitLab&#39;, url: &#39;https://ourfancygitlab.lan/xyz/dbtstuff&#39;]]])
+</span></span><span style=display:flex><span>  def commitHash = gitData[&#34;GIT_COMMIT&#34;].substring(0, 7)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  stage(&#34;Build&#34;) {
+</span></span><span style=display:flex><span>    def dockerfile =
+</span></span><span style=display:flex><span>    docker.withRegistry(&#34;https://ourfancyregistry.lan&#34;) {
+</span></span><span style=display:flex><span>      def dockerImage = docker.build(&#34;dbtstuff:${commitHash}&#34;, &#34;.&#34;)
+</span></span><span style=display:flex><span>      dockerImage.push()
+</span></span><span style=display:flex><span>      dockerImage.push(&#34;latest&#34;)
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  stage(&#34;Deploy&#34;) {
+</span></span><span style=display:flex><span>    withCredentials([sshUserPrivateKey(credentialsId: &#39;REDACTED&#39;, keyFileVariable: &#39;sshIdentityFile&#39;, passphraseVariable: &#39;sshPassphrase&#39;, usernameVariable: &#39;sshUser&#39;)]) {
+</span></span><span style=display:flex><span>      def remote = [:]
+</span></span><span style=display:flex><span>      remote.name = &#34;ourfancyserver.lan&#34;
+</span></span><span style=display:flex><span>      # ...
+</span></span><span style=display:flex><span>      # some other ssh stuff not needed for this post
+</span></span><span style=display:flex><span>      # ...
+</span></span><span style=display:flex><span>      sshPut remote: remote, from: &#34;./docker-compose.yml&#34;, into: &#34;/srv/docker/dbtstuff/docker-compose.yml&#34;
+</span></span><span style=display:flex><span>      sshCommand remote: remote, command: &#34;cd /srv/docker/dbtstuff &amp;&amp; docker compose up -d --pull always&#34;
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Again, pretty simple build pipeline that builds the image on one of our Docker build machines and then pushes it to our internal registry using the “latest” tag and a tag representing the commit hash.</p><h2 id=the-bug>The bug
+<a class=heading-link href=#the-bug><i class="fa fa-link" aria-hidden=true title="Link to heading"></i>
+<span class=sr-only>Link to heading</span></a></h2><p>Whenever my coworker pushed some changes to the GitLab repository and triggered the manual build pipeline in Jenkins, Jenkins would do its thing and deploy everything to the remote Docker host without errors.</p><p>The logs would show:</p><p><code>Container dbtstuff-app-1 Recreate</code></p><p>However somehow the files inside the container were not updated with the new ones from the latest image version.</p><h2 id=the-debugging-process>The debugging process
+<a class=heading-link href=#the-debugging-process><i class="fa fa-link" aria-hidden=true title="Link to heading"></i>
+<span class=sr-only>Link to heading</span></a></h2><p>We tried writing a new file inside the GitLab repository and then doing a <code>cat</code> during the build process of the Docker image:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Dockerfile data-lang=Dockerfile><span style=display:flex><span><span style=color:#ff79c6>FROM</span><span style=color:#f1fa8c> ghcr.io/dbt-labs/dbt-core:1.4.1 as build</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#6272a4># ...</span>
+</span></span><span style=display:flex><span><span style=color:#6272a4># some RUN commands to install dependencies and whatnot, not relevant for our scenario</span>
+</span></span><span style=display:flex><span><span style=color:#6272a4># ...</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#ff79c6>WORKDIR</span><span style=color:#f1fa8c> /usr/app</span>
+</span></span><span style=display:flex><span><span style=color:#ff79c6>COPY</span> ourproject/ .
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#6272a4># debug</span>
+</span></span><span style=display:flex><span><span style=color:#ff79c6>COPY</span> newfile.txt .
+</span></span><span style=display:flex><span><span style=color:#ff79c6>RUN</span> cat newfile.txt
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#6272a4># ...</span>
+</span></span><span style=display:flex><span><span style=color:#6272a4># some RUN commands to install dependencies and whatnot, not relevant for our scenario</span>
+</span></span><span style=display:flex><span><span style=color:#6272a4># ...</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#ff79c6>RUN</span> dbt deps
+</span></span><span style=display:flex><span><span style=color:#ff79c6>RUN</span> dbt debug -t live
+</span></span></code></pre></div><p>As expected, the file was copied correctly and the <code>cat</code> command would return the content since the file was there. But somehow, it did not end up in the deployed container. Running a <code>docker compose exec -it app ls -lah</code> on the target machine did not show it at all.</p><p>To much of our surprise, we tried bringing the compose project up again by issuing a <code>docker compose up -d --pull always</code> to try and see if somehow the new image was not being pulled from our registry, but we always got:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>[+] Pulling 1/1
+</span></span><span style=display:flex><span>✔ app Pulled
+</span></span></code></pre></div><p>suspiciously instantaneously&mldr; it was not actually downloading anything since it already did when Jenkins told it to.</p><p>What surprised us is that when issuing a <code>docker compose down</code> and a <code>docker compose up -d --pull always</code>, everything seemed to fall into place correctly, because then running a <code>docker compose exec -it app ls -lah</code> showed us that our test file was there as supposed to.</p><p>What could it be that made Docker download the wrong image somehow? Was there a bug into Docker compose or the Docker engine itself? Did we do something wrong on our side?</p><h2 id=anonymous-volumes-and-the-volume-directive>Anonymous volumes and the VOLUME directive
+<a class=heading-link href=#anonymous-volumes-and-the-volume-directive><i class="fa fa-link" aria-hidden=true title="Link to heading"></i>
+<span class=sr-only>Link to heading</span></a></h2><p>In the <a href=https://docs.docker.com/engine/reference/builder/#volume>Dockerfile reference guide</a> there&rsquo;s a directive called <code>VOLUME</code>. This directive instructs the Docker engine to create an anonymous volume in the host that mounts in the specified directory in the container.</p><p>Why am I talking about volumes here? Our <code>docker-compose.yml</code> did not have any volumes mapped, and our Dockerfile did not have any VOLUME directives specified in it, so what&rsquo;s this all about?</p><p>Well, when you create a Dockerfile, you usually reference a base image as a starting point with the FROM directive, in our case <code>FROM ghcr.io/dbt-labs/dbt-core:1.4.1</code>. The base image is in turn based on some Dockerfile that starts from another image (or <code>FROM scratch</code> in some special cases), and in that Dockerfile there could be directives that subsequent layers will inherit. In our case, the dbt-core Dockerfile contained the following directive (<a href=https://github.com/dbt-labs/dbt-core/blob/307a618ea80d4e074e9554eedab970c22eaf495c/docker/Dockerfile#L53>see the Dockerfile here</a>):</p><p><code>VOLUME /usr/app</code></p><p>This directive is inherited by our Dockerfile that starts from the base image created from this dbt Dockerfile, and thus ends up being used by Docker when starting a new container from our Dockerfile too!</p><p>This directive effectively mounts an anonymous volume (remember that we did not mount any volume in our <code>docker-compose.yml</code> file) at the first start of the container, and is persisted for each run of the same container until it is destroyed, for example by running a <code>docker compose down</code>.</p><p>We can see that it is mounted as an anonymous volume by issuing the <code>docker inspect dbtstuff-app-1</code> command and looking at the JSON manifest for the container:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span><span style=color:#6272a4>// ...
+</span></span></span><span style=display:flex><span><span style=color:#6272a4></span><span style=color:#f1fa8c>&#34;Mounts&#34;</span>: [
+</span></span><span style=display:flex><span>    {
+</span></span><span style=display:flex><span>        <span style=color:#ff79c6>&#34;Type&#34;</span>: <span style=color:#f1fa8c>&#34;volume&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#ff79c6>&#34;Name&#34;</span>: <span style=color:#f1fa8c>&#34;b6536a91b06811db8da8b446e947bf8c69e6aef0247d9476271fb2d23ee07687&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#ff79c6>&#34;Source&#34;</span>: <span style=color:#f1fa8c>&#34;/var/lib/docker/volumes/b6536a91b06811db8da8b446e947bf8c69e6aef0247d9476271fb2d23ee07687/_data&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#ff79c6>&#34;Destination&#34;</span>: <span style=color:#f1fa8c>&#34;/usr/app&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#ff79c6>&#34;Driver&#34;</span>: <span style=color:#f1fa8c>&#34;local&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#ff79c6>&#34;Mode&#34;</span>: <span style=color:#f1fa8c>&#34;&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#ff79c6>&#34;RW&#34;</span>: <span style=color:#ff79c6>true</span>,
+</span></span><span style=display:flex><span>        <span style=color:#ff79c6>&#34;Propagation&#34;</span>: <span style=color:#f1fa8c>&#34;&#34;</span>
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>],
+</span></span><span style=display:flex><span><span style=color:#6272a4>// ...
+</span></span></span></code></pre></div><p>As you can see, the <code>/usr/app</code> folder of the container has been mounted by Docker as an anonymous volume (hence the strange hash name it has) and will be persisted across restarts, meaning that a <code>docker compose up -d --pull always</code> will pull the new image, but will not overwrite anything that is located inside the volume mounted folders, thus preventing us from seeing changes that are built into the image itself.</p><h2 id=the-thing-that-got-me-fooled>The thing that got me fooled
+<a class=heading-link href=#the-thing-that-got-me-fooled><i class="fa fa-link" aria-hidden=true title="Link to heading"></i>
+<span class=sr-only>Link to heading</span></a></h2><p>If you search the <code>docker inspect dbtstuff-app-1</code> output, you will see that there is an <code>Image</code> property with the SHA256 hash of the image the container is running (or that is created on, if the container is stopped). If you do a <code>docker compose up -d --pull always</code> you will see that the image SHA256 will change, tricking you into thinking the container was recreated when effectively it was not! Or at least it was recreated, but it kept the same manifest with the same configuration as far as volumes are concerned.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span><span style=color:#6272a4>// before pulling the image
+</span></span></span><span style=display:flex><span><span style=color:#6272a4></span><span style=color:#f1fa8c>&#34;Image&#34;</span>: <span style=color:#f1fa8c>&#34;sha256:4849b591445c29d3a1bed5b616cb90205a6b02e938ef32a15d1de949cf422bd1&#34;</span>,
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#6272a4>// after pulling the image
+</span></span></span><span style=display:flex><span><span style=color:#6272a4></span><span style=color:#f1fa8c>&#34;Image&#34;</span>: <span style=color:#f1fa8c>&#34;sha256:14999a5b0ffac8874d152fdd610c670c4881ec96e09a152b510ce395b6ea6533&#34;</span>,
+</span></span></code></pre></div><h2 id=the-solution>The solution
+<a class=heading-link href=#the-solution><i class="fa fa-link" aria-hidden=true title="Link to heading"></i>
+<span class=sr-only>Link to heading</span></a></h2><p>You can just append a <code>docker compose down</code> command to your deploy pipeline, right before doing the <code>docker compose up</code> command, and everything will work fine. You can even go as far as adding a <code>-v</code> flag (meaning <code>docker compose down -v</code>) to get rid of anonymous volumes so that they do not pile up in your Docker host, but be careful that if you&rsquo;re using other named volumes in your <code>docker-compose.yml</code> file, they will be destroyed too!</p><h2 id=conclusion>Conclusion
+<a class=heading-link href=#conclusion><i class="fa fa-link" aria-hidden=true title="Link to heading"></i>
+<span class=sr-only>Link to heading</span></a></h2><p>In newer versions of the <code>dbt-core</code> image that we used here, it seems <a href=https://github.com/dbt-labs/dbt-core/commit/30def98ed948658ea012071fcd8c249bde4360f0>they got rid of that anonymous volume in the Dockerfile</a>, but for a few reason we cannot upgrade yet to the newest one, so we ended up solving this problem by adding the <code>docker compose down -v</code> command in the Jenkinsfile right before deploying everything.</p></div><footer></footer></article></section></div><footer class=footer><section class=container>©
+2019 -
+2023
+Stefano Previato
+·
+Licensed under <a rel=license href=http://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA-4.0</a>
+·
+Powered by <a href=https://gohugo.io/>Hugo</a> & <a href=https://github.com/luizdepra/hugo-coder/>Coder</a>.</section></footer></main><script src=/js/coder.min.236049395dc3682fb2719640872958e12f1f24067bb09c327b233e6290c7edac.js integrity="sha256-I2BJOV3DaC+ycZZAhylY4S8fJAZ7sJwyeyM+YpDH7aw="></script><script type=application/javascript>var _paq=window._paq=window._paq||[];_paq.push(["trackPageView"]),_paq.push(["enableLinkTracking"]),function(){e="https://matomo.frikydesign.it/",_paq.push(["setTrackerUrl",e+"matomo.php"]),_paq.push(["setSiteId","10"]);var e,n=document,t=n.createElement("script"),s=n.getElementsByTagName("script")[0];t.async=!0,t.src=e+"matomo.js",s.parentNode.insertBefore(t,s)}()</script></body></html>
