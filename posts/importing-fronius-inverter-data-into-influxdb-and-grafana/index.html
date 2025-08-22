@@ -1,221 +1,220 @@
-<!doctype html><html lang=en><head><title>Importing Fronius inverter data into InfluxDB and Grafana · frikyfriky11
-</title><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=color-scheme content="light dark"><meta name=author content="Stefano Previato"><meta name=description content="Some inverter from the brand Fronius can expose their data via some HTTP APIs, making it possible to analyze them further by storing them in a timeseries database and visualizing them."><meta name=keywords content="blog,developer,personal,software engineer"><meta name=twitter:card content="summary"><meta name=twitter:title content="Importing Fronius inverter data into InfluxDB and Grafana"><meta name=twitter:description content="Some inverter from the brand Fronius can expose their data via some HTTP APIs, making it possible to analyze them further by storing them in a timeseries database and visualizing them."><meta property="og:title" content="Importing Fronius inverter data into InfluxDB and Grafana"><meta property="og:description" content="Some inverter from the brand Fronius can expose their data via some HTTP APIs, making it possible to analyze them further by storing them in a timeseries database and visualizing them."><meta property="og:type" content="article"><meta property="og:url" content="https://frikyfriky11.github.io/posts/importing-fronius-inverter-data-into-influxdb-and-grafana/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2024-01-05T15:09:34+01:00"><meta property="article:modified_time" content="2024-01-05T15:09:34+01:00"><link rel=canonical href=https://frikyfriky11.github.io/posts/importing-fronius-inverter-data-into-influxdb-and-grafana/><link rel=preload href="/fonts/forkawesome-webfont.woff2?v=1.2.0" as=font type=font/woff2 crossorigin><link rel=stylesheet href=/css/coder.min.e1bdf152d93b060b06ba5d496486ed9c201a8b95d335e035beb5faebe3b61cad.css integrity="sha256-4b3xUtk7BgsGul1JZIbtnCAai5XTNeA1vrX66+O2HK0=" crossorigin=anonymous media=screen><link rel=stylesheet href=/css/coder-dark.min.a00e6364bacbc8266ad1cc81230774a1397198f8cfb7bcba29b7d6fcb54ce57f.css integrity="sha256-oA5jZLrLyCZq0cyBIwd0oTlxmPjPt7y6KbfW/LVM5X8=" crossorigin=anonymous media=screen><link rel=icon type=image/svg+xml href=/images/favicon.svg sizes=any><link rel=icon type=image/png href=/images/favicon-32x32.png sizes=32x32><link rel=icon type=image/png href=/images/favicon-16x16.png sizes=16x16><link rel=apple-touch-icon href=/images/apple-touch-icon.png><link rel=apple-touch-icon sizes=180x180 href=/images/apple-touch-icon.png><link rel=manifest href=/site.webmanifest><link rel=mask-icon href=/images/safari-pinned-tab.svg color=#5bbad5></head><body class="preload-transitions colorscheme-auto"><div class=float-container><a id=dark-mode-toggle class=colorscheme-toggle><i class="fa fa-adjust fa-fw" aria-hidden=true></i></a></div><main class=wrapper><nav class=navigation><section class=container><a class=navigation-title href=/>frikyfriky11
+<!doctype html><html lang=en><head><title>Importing Fronius inverter data into InfluxDB and Grafana · frikyfriky11</title><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=color-scheme content="light dark"><meta name=author content="Stefano Previato"><meta name=description content="Some inverter from the brand Fronius can expose their data via some HTTP APIs, making it possible to analyze them further by storing them in a timeseries database and visualizing them."><meta name=keywords content="blog,developer,personal,software engineer"><meta name=twitter:card content="summary"><meta name=twitter:title content="Importing Fronius inverter data into InfluxDB and Grafana"><meta name=twitter:description content="Some inverter from the brand Fronius can expose their data via some HTTP APIs, making it possible to analyze them further by storing them in a timeseries database and visualizing them."><meta property="og:url" content="https://frikyfriky11.github.io/posts/importing-fronius-inverter-data-into-influxdb-and-grafana/"><meta property="og:site_name" content="frikyfriky11"><meta property="og:title" content="Importing Fronius inverter data into InfluxDB and Grafana"><meta property="og:description" content="Some inverter from the brand Fronius can expose their data via some HTTP APIs, making it possible to analyze them further by storing them in a timeseries database and visualizing them."><meta property="og:locale" content="en"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2024-01-05T15:09:34+01:00"><meta property="article:modified_time" content="2024-01-05T15:09:34+01:00"><meta property="article:tag" content="Fronius"><meta property="article:tag" content="Inverter"><meta property="article:tag" content="InfluxDB"><meta property="article:tag" content="Grafana"><meta property="article:tag" content="Data"><link rel=canonical href=https://frikyfriky11.github.io/posts/importing-fronius-inverter-data-into-influxdb-and-grafana/><link rel=preload href=/fonts/fa-brands-400.woff2 as=font type=font/woff2 crossorigin><link rel=preload href=/fonts/fa-regular-400.woff2 as=font type=font/woff2 crossorigin><link rel=preload href=/fonts/fa-solid-900.woff2 as=font type=font/woff2 crossorigin><link rel=stylesheet href=/css/coder.min.6445a802b9389c9660e1b07b724dcf5718b1065ed2d71b4eeaf981cc7cc5fc46.css integrity="sha256-ZEWoArk4nJZg4bB7ck3PVxixBl7S1xtO6vmBzHzF/EY=" crossorigin=anonymous media=screen><link rel=stylesheet href=/css/coder-dark.min.a00e6364bacbc8266ad1cc81230774a1397198f8cfb7bcba29b7d6fcb54ce57f.css integrity="sha256-oA5jZLrLyCZq0cyBIwd0oTlxmPjPt7y6KbfW/LVM5X8=" crossorigin=anonymous media=screen><link rel=icon type=image/svg+xml href=/images/favicon.svg sizes=any><link rel=icon type=image/png href=/images/favicon-32x32.png sizes=32x32><link rel=icon type=image/png href=/images/favicon-16x16.png sizes=16x16><link rel=apple-touch-icon href=/images/apple-touch-icon.png><link rel=apple-touch-icon sizes=180x180 href=/images/apple-touch-icon.png><link rel=manifest href=/site.webmanifest><link rel=mask-icon href=/images/safari-pinned-tab.svg color=#5bbad5></head><body class="preload-transitions colorscheme-auto"><div class=float-container><a id=dark-mode-toggle class=colorscheme-toggle><i class="fa-solid fa-adjust fa-fw" aria-hidden=true></i></a></div><main class=wrapper><nav class=navigation><section class=container><a class=navigation-title href=https://frikyfriky11.github.io/>frikyfriky11
 </a><input type=checkbox id=menu-toggle>
-<label class="menu-button float-right" for=menu-toggle><i class="fa fa-bars fa-fw" aria-hidden=true></i></label><ul class=navigation-list><li class=navigation-item><a class=navigation-link href=/posts/>Posts</a></li><li class=navigation-item><a class=navigation-link href=/categories/>Categories</a></li><li class=navigation-item><a class=navigation-link href=/tags/>Tags</a></li><li class=navigation-item><a class=navigation-link href=/about/>About me</a></li></ul></section></nav><div class=content><section class="container post"><article><header><div class=post-title><h1 class=title><a class=title-link href=https://frikyfriky11.github.io/posts/importing-fronius-inverter-data-into-influxdb-and-grafana/>Importing Fronius inverter data into InfluxDB and Grafana</a></h1></div><div class=post-meta><div class=date><span class=posted-on><i class="fa fa-calendar" aria-hidden=true></i>
+<label class="menu-button float-right" for=menu-toggle><i class="fa-solid fa-bars fa-fw" aria-hidden=true></i></label><ul class=navigation-list><li class=navigation-item><a class=navigation-link href=/posts/>Posts</a></li><li class=navigation-item><a class=navigation-link href=/categories/>Categories</a></li><li class=navigation-item><a class=navigation-link href=/tags/>Tags</a></li><li class=navigation-item><a class=navigation-link href=/about/>About me</a></li></ul></section></nav><div class=content><section class="container post"><article><header><div class=post-title><h1 class=title><a class=title-link href=https://frikyfriky11.github.io/posts/importing-fronius-inverter-data-into-influxdb-and-grafana/>Importing Fronius inverter data into InfluxDB and Grafana</a></h1></div><div class=post-meta><div class=date><span class=posted-on><i class="fa-solid fa-calendar" aria-hidden=true></i>
 <time datetime=2024-01-05T15:09:34+01:00>January 5, 2024
-</time></span><span class=reading-time><i class="fa fa-clock-o" aria-hidden=true></i>
-7-minute read</span></div><div class=authors><i class="fa fa-user" aria-hidden=true></i>
-<a href=/authors/stefano-previato/>Stefano Previato</a></div><div class=categories><i class="fa fa-folder" aria-hidden=true></i>
+</time></span><span class=reading-time><i class="fa-solid fa-clock" aria-hidden=true></i>
+7-minute read</span></div><div class=authors><i class="fa-solid fa-user" aria-hidden=true></i>
+<a href=/authors/stefano-previato/>Stefano Previato</a></div><div class=categories><i class="fa-solid fa-folder" aria-hidden=true></i>
 <a href=/categories/influxdb/>InfluxDB</a>
 <span class=separator>•</span>
 <a href=/categories/grafana/>Grafana</a>
 <span class=separator>•</span>
-<a href=/categories/data/>Data</a></div><div class=tags><i class="fa fa-tag" aria-hidden=true></i>
+<a href=/categories/data/>Data</a></div><div class=tags><i class="fa-solid fa-tag" aria-hidden=true></i>
 <span class=tag><a href=/tags/fronius/>Fronius</a>
 </span><span class=separator>•</span>
-<span class=tag><a href=/tags/inverter/>inverter</a>
+<span class=tag><a href=/tags/inverter/>Inverter</a>
 </span><span class=separator>•</span>
 <span class=tag><a href=/tags/influxdb/>InfluxDB</a>
 </span><span class=separator>•</span>
 <span class=tag><a href=/tags/grafana/>Grafana</a>
 </span><span class=separator>•</span>
-<span class=tag><a href=/tags/data/>data</a></span></div></div></header><div class=post-content><h2 id=preface>Preface
-<a class=heading-link href=#preface><i class="fa fa-link" aria-hidden=true title="Link to heading"></i>
-<span class=sr-only>Link to heading</span></a></h2><p>My in-laws recently upgraded their home&rsquo;s electrical system, and also installed a new inverter along with some batteries for the solar panels they installed on the roof of their house.</p><p><img src=fronius_primo_gen24.png alt="Fronius Inverter Primo GEN24 6.0"></p><p>What caught my eye was that the inverter came with an app that you could download on your smartphone to have a look at all the current stats of the system, like battery charge, usage and solar production, but it had no historical features (or better, they were not so interesting because didn&rsquo;t allow to analyze data past a certain point in time).</p><p><img src=fronius_webui.png alt="Fronius WebUI"></p><p>So I started looking around the internet for some documentation, and found out you can actually read the same real time data by calling some HTTP endpoints exposed by the inverter itself! The inverter is in fact connected to the local network, and the app is just a visualization tool that asks the current data via the local network. This is different than other implementations I&rsquo;ve seen around, where the data is not actually exposed by the device, but rather it is sent to a cloud service, where you have to pay to see what they are receiving from your device. Crazy, right? You own the device, but the data is not yours and it&rsquo;s behind a paywall.</p><p>Here&rsquo;s the documentation if you want to take a look at it: <a href=fronius_solar_api_v1.pdf>Fronius Solar API v1</a></p><h2 id=requirements>Requirements
-<a class=heading-link href=#requirements><i class="fa fa-link" aria-hidden=true title="Link to heading"></i>
+<span class=tag><a href=/tags/data/>Data</a></span></div></div></header><div class=post-content><h2 id=preface>Preface
+<a class=heading-link href=#preface><i class="fa-solid fa-link" aria-hidden=true title="Link to heading"></i>
+<span class=sr-only>Link to heading</span></a></h2><p>My in-laws recently upgraded their home&rsquo;s electrical system, and also installed a new inverter along with some batteries for the solar panels they installed on the roof of their house.</p><p><img src=/posts/importing-fronius-inverter-data-into-influxdb-and-grafana/fronius_primo_gen24.png alt="Fronius Inverter Primo GEN24 6.0"></p><p>What caught my eye was that the inverter came with an app that you could download on your smartphone to have a look at all the current stats of the system, like battery charge, usage and solar production, but it had no historical features (or better, they were not so interesting because didn&rsquo;t allow to analyze data past a certain point in time).</p><p><img src=/posts/importing-fronius-inverter-data-into-influxdb-and-grafana/fronius_webui.png alt="Fronius WebUI"></p><p>So I started looking around the internet for some documentation, and found out you can actually read the same real time data by calling some HTTP endpoints exposed by the inverter itself! The inverter is in fact connected to the local network, and the app is just a visualization tool that asks the current data via the local network. This is different than other implementations I&rsquo;ve seen around, where the data is not actually exposed by the device, but rather it is sent to a cloud service, where you have to pay to see what they are receiving from your device. Crazy, right? You own the device, but the data is not yours and it&rsquo;s behind a paywall.</p><p>Here&rsquo;s the documentation if you want to take a look at it: <a href=fronius_solar_api_v1.pdf>Fronius Solar API v1</a></p><h2 id=requirements>Requirements
+<a class=heading-link href=#requirements><i class="fa-solid fa-link" aria-hidden=true title="Link to heading"></i>
 <span class=sr-only>Link to heading</span></a></h2><p>TLDR:</p><ul><li>enable HTTP API in the inverter web settings (you need your electrician for this)</li><li>install and setup InfluxDB</li><li>install and setup Grafana</li><li>install and setup Telegraf</li></ul><p>Since Fronius seems to be a more serious organization, they allow you to see the data exposed by their inverter, but first you have to call the electrician that installed the system to ask them to enable this feature on your device. This is because otherwise you would not be able to get replies from the Fronius HTTP API. From what I&rsquo;ve seen, there&rsquo;s no need for the electrician to come to your home, he just needs remote access to login into the device and unlock the feature using his &ldquo;supervisor&rdquo; credentials.</p><p>Once enabled, you should be able to go to the local address of the inverter (you can look it up by reading the MAC address on the device itself and then looking into your router what&rsquo;s the IP), or you may be even luckier and just be able to go to http://fronius if mDNS is working on your network.</p><p>At this point, you need a working instance of InfluxDB (our timeseries database of choice), Telegraf (our collecting agent of choice) and Grafana (our visualization tool of choice). There are plenty of guides that will help you set them up.</p><p>Personally, for this specific project I&rsquo;m running InfluxDB v2.7.3 and Grafana Enterprise v10.2.0 as Docker containers on a cloud VPS machine, and Telegraf v1.29.1 on a little NUC machine installed at my in-laws connected to their network.</p><h2 id=telegraf-configuration>Telegraf configuration
-<a class=heading-link href=#telegraf-configuration><i class="fa fa-link" aria-hidden=true title="Link to heading"></i>
-<span class=sr-only>Link to heading</span></a></h2><p>To collect data, I used Telegraf since it&rsquo;s very powerful and stable and I set up a new Telegraf configuration on my InfluxDB instance.</p><p>Since there&rsquo;s a lot of data that can be pulled out from the inverter, you can save some time and copy my configuration below:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>[agent]
-</span></span><span style=display:flex><span>  interval = &#34;10s&#34;
-</span></span><span style=display:flex><span>  round_interval = true
-</span></span><span style=display:flex><span>  metric_batch_size = 1000
-</span></span><span style=display:flex><span>  metric_buffer_limit = 10000
-</span></span><span style=display:flex><span>  collection_jitter = &#34;0s&#34;
-</span></span><span style=display:flex><span>  flush_interval = &#34;10s&#34;
-</span></span><span style=display:flex><span>  flush_jitter = &#34;0s&#34;
-</span></span><span style=display:flex><span>  precision = &#34;&#34;
+<a class=heading-link href=#telegraf-configuration><i class="fa-solid fa-link" aria-hidden=true title="Link to heading"></i>
+<span class=sr-only>Link to heading</span></a></h2><p>To collect data, I used Telegraf since it&rsquo;s very powerful and stable and I set up a new Telegraf configuration on my InfluxDB instance.</p><p>Since there&rsquo;s a lot of data that can be pulled out from the inverter, you can save some time and copy my configuration below:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>[<span style=color:#ae81ff>agent]</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>interval = &#34;10s&#34;</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>round_interval = true</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>metric_batch_size = 1000</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>metric_buffer_limit = 10000</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>collection_jitter = &#34;0s&#34;</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>flush_interval = &#34;10s&#34;</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>flush_jitter = &#34;0s&#34;</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>precision = &#34;&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>[[outputs.influxdb_v2]]
-</span></span><span style=display:flex><span>  urls = [&#34;https://your-influxdb-instance-url&#34;] <span style=color:#6272a4># replace with your InfluxDB instance URL</span>
-</span></span><span style=display:flex><span>  token = &#34;$INFLUX_TOKEN&#34; <span style=color:#6272a4># this will be injected via env variables on the Telegraf machine</span>
-</span></span><span style=display:flex><span>  organization = &#34;your-influxdb-org&#34; <span style=color:#6272a4># replace with your InfluxDB organization name</span>
-</span></span><span style=display:flex><span>  bucket = &#34;fronius&#34; <span style=color:#6272a4># replace with your InfluxDB bucket name</span>
+</span></span><span style=display:flex><span>[[<span style=color:#ae81ff>outputs.influxdb_v2]]</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>urls = [&#34;https://your-influxdb-instance-url&#34;]</span> <span style=color:#75715e># replace with your InfluxDB instance URL</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>token = &#34;$INFLUX_TOKEN&#34;</span> <span style=color:#75715e># this will be injected via env variables on the Telegraf machine</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>organization = &#34;your-influxdb-org&#34;</span> <span style=color:#75715e># replace with your InfluxDB organization name</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>bucket = &#34;fronius&#34;</span> <span style=color:#75715e># replace with your InfluxDB bucket name</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>[[inputs.http]]
-</span></span><span style=display:flex><span>  urls = [&#34;http://fronius/solar_api/v1/GetInverterRealtimeData.cgi?Scope=Device&amp;DeviceId=1&amp;DataCollection=CommonInverterData&#34;]
-</span></span><span style=display:flex><span>  data_format = &#34;json_v2&#34;
+</span></span><span style=display:flex><span>[[<span style=color:#ae81ff>inputs.http]]</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>urls = [&#34;http://fronius/solar_api/v1/GetInverterRealtimeData.cgi?Scope=Device&amp;DeviceId=1&amp;DataCollection=CommonInverterData&#34;]</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>data_format = &#34;json_v2&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2]]
-</span></span><span style=display:flex><span>    measurement_name = &#34;inverter_realtime&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>measurement_name = &#34;inverter_realtime&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.PAC.Value&#34;
-</span></span><span style=display:flex><span>    rename = &#34;pac_ac_power_w&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.PAC.Value&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;pac_ac_power_w&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.SAC.Value&#34;
-</span></span><span style=display:flex><span>    rename = &#34;sac_ac_power_va&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.SAC.Value&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;sac_ac_power_va&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.IAC.Value&#34;
-</span></span><span style=display:flex><span>    rename = &#34;iac_ac_current_a&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.IAC.Value&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;iac_ac_current_a&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.UAC.Value&#34;
-</span></span><span style=display:flex><span>    rename = &#34;uac_ac_voltage_v&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.UAC.Value&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;uac_ac_voltage_v&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.FAC.Value&#34;
-</span></span><span style=display:flex><span>    rename = &#34;fac_ac_frequency_hz&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.FAC.Value&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;fac_ac_frequency_hz&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.IDC.Value&#34;
-</span></span><span style=display:flex><span>    rename = &#34;idc_dc_current_a&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.IDC.Value&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;idc_dc_current_a&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.UDC.Value&#34;
-</span></span><span style=display:flex><span>    rename = &#34;udc_dc_voltage_v&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.UDC.Value&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;udc_dc_voltage_v&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.IDC_2.Value&#34;
-</span></span><span style=display:flex><span>    rename = &#34;idc_2_dc_current_a&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.IDC_2.Value&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;idc_2_dc_current_a&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.UDC_2.Value&#34;
-</span></span><span style=display:flex><span>    rename = &#34;udc_2_dc_voltage_v&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.UDC_2.Value&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;udc_2_dc_voltage_v&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.DeviceStatus.ErrorCode&#34;
-</span></span><span style=display:flex><span>    rename = &#34;devicestatus_errorcode&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.DeviceStatus.ErrorCode&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;devicestatus_errorcode&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.DeviceStatus.InverterState&#34;
-</span></span><span style=display:flex><span>    rename = &#34;devicestatus_inverterstate&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.DeviceStatus.InverterState&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;devicestatus_inverterstate&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.DeviceStatus.StatusCode&#34;
-</span></span><span style=display:flex><span>    rename = &#34;devicestatus_statuscode&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.DeviceStatus.StatusCode&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;devicestatus_statuscode&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>[[inputs.http]]
-</span></span><span style=display:flex><span>  urls = [&#34;http://fronius/solar_api/v1/GetStorageRealtimeData.cgi?Scope=Device&amp;DeviceId=0&#34;]
-</span></span><span style=display:flex><span>  data_format = &#34;json_v2&#34;
+</span></span><span style=display:flex><span>[[<span style=color:#ae81ff>inputs.http]]</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>urls = [&#34;http://fronius/solar_api/v1/GetStorageRealtimeData.cgi?Scope=Device&amp;DeviceId=0&#34;]</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>data_format = &#34;json_v2&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2]]
-</span></span><span style=display:flex><span>    measurement_name = &#34;storage_realtime&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>measurement_name = &#34;storage_realtime&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Controller.Capacity_Maximum&#34;
-</span></span><span style=display:flex><span>    rename = &#34;capacity_maximum_w&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Controller.Capacity_Maximum&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;capacity_maximum_w&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Controller.Current_DC&#34;
-</span></span><span style=display:flex><span>    rename = &#34;current_dc_a&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Controller.Current_DC&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;current_dc_a&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Controller.DesignedCapacity&#34;
-</span></span><span style=display:flex><span>    rename = &#34;designed_capacity_w&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Controller.DesignedCapacity&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;designed_capacity_w&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Controller.Details.Manufacturer&#34;
-</span></span><span style=display:flex><span>    rename = &#34;manufacturer&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Controller.Details.Manufacturer&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;manufacturer&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Controller.Details.Model&#34;
-</span></span><span style=display:flex><span>    rename = &#34;model&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Controller.Details.Model&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;model&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Controller.Details.Serial&#34;
-</span></span><span style=display:flex><span>    rename = &#34;serial&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Controller.Details.Serial&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;serial&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Controller.Enable&#34;
-</span></span><span style=display:flex><span>    rename = &#34;enable&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Controller.Enable&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;enable&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Controller.StateOfCharge_Relative&#34;
-</span></span><span style=display:flex><span>    rename = &#34;charging_state_relative_percent&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Controller.StateOfCharge_Relative&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;charging_state_relative_percent&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Controller.Status_BatteryCell&#34;
-</span></span><span style=display:flex><span>    rename = &#34;battery_cell_status&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Controller.Status_BatteryCell&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;battery_cell_status&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Controller.Temperature_Cell&#34;
-</span></span><span style=display:flex><span>    rename = &#34;temperature_cell_c&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Controller.Temperature_Cell&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;temperature_cell_c&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Controller.Voltage_DC&#34;
-</span></span><span style=display:flex><span>    rename = &#34;voltage_dc_v&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Controller.Voltage_DC&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;voltage_dc_v&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>[[inputs.http]]
-</span></span><span style=display:flex><span>  urls = [&#34;http://fronius/solar_api/v1/GetPowerFlowRealtimeData.fcgi&#34;]
-</span></span><span style=display:flex><span>  data_format = &#34;json_v2&#34;
+</span></span><span style=display:flex><span>[[<span style=color:#ae81ff>inputs.http]]</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>urls = [&#34;http://fronius/solar_api/v1/GetPowerFlowRealtimeData.fcgi&#34;]</span>
+</span></span><span style=display:flex><span>  <span style=color:#ae81ff>data_format = &#34;json_v2&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2]]
-</span></span><span style=display:flex><span>    measurement_name = &#34;powerflow_realtime&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>measurement_name = &#34;powerflow_realtime&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Inverters.1.Battery_Mode&#34;
-</span></span><span style=display:flex><span>    rename = &#34;inverter_battery_mode&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Inverters.1.Battery_Mode&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;inverter_battery_mode&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Inverters.1.P&#34;
-</span></span><span style=display:flex><span>    rename = &#34;inverter_p&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Inverters.1.P&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;inverter_p&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Inverters.1.SOC&#34;
-</span></span><span style=display:flex><span>    rename = &#34;inverter_soc&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Inverters.1.SOC&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;inverter_soc&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Site.BackupMode&#34;
-</span></span><span style=display:flex><span>    rename = &#34;site_backup_mode&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Site.BackupMode&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;site_backup_mode&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Site.BatteryStandby&#34;
-</span></span><span style=display:flex><span>    rename = &#34;site_battery_standby&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Site.BatteryStandby&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;site_battery_standby&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Site.Meter_Location&#34;
-</span></span><span style=display:flex><span>    rename = &#34;site_meter_location&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Site.Meter_Location&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;site_meter_location&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Site.Mode&#34;
-</span></span><span style=display:flex><span>    rename = &#34;site_mode&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Site.Mode&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;site_mode&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Site.P_Akku&#34;
-</span></span><span style=display:flex><span>    rename = &#34;site_power_batteries_w&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Site.P_Akku&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;site_power_batteries_w&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Site.P_Grid&#34;
-</span></span><span style=display:flex><span>    rename = &#34;site_power_grid_w&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Site.P_Grid&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;site_power_grid_w&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Site.P_Load&#34;
-</span></span><span style=display:flex><span>    rename = &#34;site_power_load_w&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Site.P_Load&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;site_power_load_w&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Site.P_PV&#34;
-</span></span><span style=display:flex><span>    rename = &#34;site_power_panels_w&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Site.P_PV&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;site_power_panels_w&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Site.rel_Autonomy&#34;
-</span></span><span style=display:flex><span>    rename = &#34;site_autonomy_percent&#34;
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Site.rel_Autonomy&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;site_autonomy_percent&#34;</span>
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>  [[inputs.http.json_v2.field]]
-</span></span><span style=display:flex><span>    path = &#34;Body.Data.Site.rel_SelfConsumption&#34;
-</span></span><span style=display:flex><span>    rename = &#34;site_self_consumption_percent&#34;
-</span></span></code></pre></div><p>This configuration pulls all the useful data from the real time endpoints every 10 seconds and stores them into the InfluxDB configured instance in three separate measurements, each with friendly field names.</p><p>You will need to replace the URL in each of the three endpoints if yours cannot be resolved via http://fronius (I had to use a static IP because name resolution was a bit brittle in my in-laws network for some reason, so I configured a static lease in the router and just used the IP in each URL).</p><p>Disclaimer: I have to admit I don&rsquo;t really know what some of the fields represent, but I tried to understand them by looking at what the WebUI exposed and what I could see in the API calls, and researching a bit over the internet if I could find anything useful. A couple of fields seem to represent enums or something like that, but I couldn&rsquo;t find each possible value in the documentation.</p><p>Once you have saved the Telegraf configuration, click on &ldquo;Setup instructions&rdquo; in the InfluxDB UI and follow the instructions, also generating a new API token if you don&rsquo;t already have one:</p><p><img src=influxdb_telegraf_setup.png alt="InfluxDB UI setup instructions"></p><p>If you want to run this as a one-time test, you can do as the instructions say.</p><p>I wanted this to be a permanent thing, so I set up a systemd service in the NUC machine that will run the Telegraf instance. Here&rsquo;s the config file of the unit:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ini data-lang=ini><span style=display:flex><span><span style=color:#ff79c6>[Service]</span>
-</span></span><span style=display:flex><span><span style=color:#50fa7b>ExecStart</span><span style=color:#ff79c6>=</span>
-</span></span><span style=display:flex><span><span style=color:#50fa7b>ExecStart</span><span style=color:#ff79c6>=</span><span style=color:#f1fa8c>/usr/bin/telegraf --config https://your-url-above/api/v2/telegrafs/your-telegraf-id-above $TELEGRAF_OPTS</span>
-</span></span><span style=display:flex><span><span style=color:#50fa7b>Environment</span><span style=color:#ff79c6>=</span><span style=color:#f1fa8c>&#34;INFLUX_TOKEN=your_influx_token_above&#34;</span>
-</span></span></code></pre></div><p>We&rsquo;re done!</p><p>If everything is working correctly, you should start seeing data come in into your InfluxDB bucket:</p><p><img src=influxdb_data.png alt="InfluxDB data"></p><h2 id=grafana-dashboard>Grafana dashboard
-<a class=heading-link href=#grafana-dashboard><i class="fa fa-link" aria-hidden=true title="Link to heading"></i>
-<span class=sr-only>Link to heading</span></a></h2><p>At this point you can connect to your Grafana instance and create some cool visualizations.</p><p>If you speak Italian, here&rsquo;s what I created for this project, you may find it useful for your project too or as a starting point for something more complex:</p><p><img src=grafana_1.png alt="Grafana sample 1"></p><p><img src=grafana_2.png alt="Grafana sample 2"></p><p><img src=grafana_3.png alt="Grafana sample 3"></p><p><img src=grafana_4.png alt="Grafana sample 4"></p><p>If you want to download it as a JSON file that you can import in your Grafana instance, here&rsquo;s the file: <a href=grafana_dashboard.json>Grafana dashboard JSON file</a></p><h2 id=conclusion>Conclusion
-<a class=heading-link href=#conclusion><i class="fa fa-link" aria-hidden=true title="Link to heading"></i>
+</span></span><span style=display:flex><span>  [[<span style=color:#ae81ff>inputs.http.json_v2.field]]</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>path = &#34;Body.Data.Site.rel_SelfConsumption&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ae81ff>rename = &#34;site_self_consumption_percent&#34;</span>
+</span></span></code></pre></div><p>This configuration pulls all the useful data from the real time endpoints every 10 seconds and stores them into the InfluxDB configured instance in three separate measurements, each with friendly field names.</p><p>You will need to replace the URL in each of the three endpoints if yours cannot be resolved via http://fronius (I had to use a static IP because name resolution was a bit brittle in my in-laws network for some reason, so I configured a static lease in the router and just used the IP in each URL).</p><p>Disclaimer: I have to admit I don&rsquo;t really know what some of the fields represent, but I tried to understand them by looking at what the WebUI exposed and what I could see in the API calls, and researching a bit over the internet if I could find anything useful. A couple of fields seem to represent enums or something like that, but I couldn&rsquo;t find each possible value in the documentation.</p><p>Once you have saved the Telegraf configuration, click on &ldquo;Setup instructions&rdquo; in the InfluxDB UI and follow the instructions, also generating a new API token if you don&rsquo;t already have one:</p><p><img src=/posts/importing-fronius-inverter-data-into-influxdb-and-grafana/influxdb_telegraf_setup.png alt="InfluxDB UI setup instructions"></p><p>If you want to run this as a one-time test, you can do as the instructions say.</p><p>I wanted this to be a permanent thing, so I set up a systemd service in the NUC machine that will run the Telegraf instance. Here&rsquo;s the config file of the unit:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ini data-lang=ini><span style=display:flex><span><span style=color:#66d9ef>[Service]</span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>ExecStart</span><span style=color:#f92672>=</span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>ExecStart</span><span style=color:#f92672>=</span><span style=color:#e6db74>/usr/bin/telegraf --config https://your-url-above/api/v2/telegrafs/your-telegraf-id-above $TELEGRAF_OPTS</span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>Environment</span><span style=color:#f92672>=</span><span style=color:#e6db74>&#34;INFLUX_TOKEN=your_influx_token_above&#34;</span>
+</span></span></code></pre></div><p>We&rsquo;re done!</p><p>If everything is working correctly, you should start seeing data come in into your InfluxDB bucket:</p><p><img src=/posts/importing-fronius-inverter-data-into-influxdb-and-grafana/influxdb_data.png alt="InfluxDB data"></p><h2 id=grafana-dashboard>Grafana dashboard
+<a class=heading-link href=#grafana-dashboard><i class="fa-solid fa-link" aria-hidden=true title="Link to heading"></i>
+<span class=sr-only>Link to heading</span></a></h2><p>At this point you can connect to your Grafana instance and create some cool visualizations.</p><p>If you speak Italian, here&rsquo;s what I created for this project, you may find it useful for your project too or as a starting point for something more complex:</p><p><img src=/posts/importing-fronius-inverter-data-into-influxdb-and-grafana/grafana_1.png alt="Grafana sample 1"></p><p><img src=/posts/importing-fronius-inverter-data-into-influxdb-and-grafana/grafana_2.png alt="Grafana sample 2"></p><p><img src=/posts/importing-fronius-inverter-data-into-influxdb-and-grafana/grafana_3.png alt="Grafana sample 3"></p><p><img src=/posts/importing-fronius-inverter-data-into-influxdb-and-grafana/grafana_4.png alt="Grafana sample 4"></p><p>If you want to download it as a JSON file that you can import in your Grafana instance, here&rsquo;s the file: <a href=grafana_dashboard.json>Grafana dashboard JSON file</a></p><h2 id=conclusion>Conclusion
+<a class=heading-link href=#conclusion><i class="fa-solid fa-link" aria-hidden=true title="Link to heading"></i>
 <span class=sr-only>Link to heading</span></a></h2><p>I love collecting data about stuff that we own, it helps us get more insights about the things we have and how we use them, and in this specific case it helps us make better use of green energy, which is always a nice thing to do these days.</p><p>If you end up doing something similar with your devices, let me know, I&rsquo;d love to see what you can do.</p></div><footer></footer></article></section></div><footer class=footer><section class=container>©
 2019 -
-2024
+2025
 Stefano Previato
 ·
 Licensed under <a rel=license href=http://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA-4.0</a>
