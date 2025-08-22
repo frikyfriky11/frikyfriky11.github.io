@@ -3,7 +3,6 @@ title = "frikyfriky11"
 theme = "hugo-coder"
 languageCode = "en"
 defaultContentLanguage = "en"
-paginate = 20
 pygmentsStyle = "dracula"
 pygmentsCodeFences = true
 pygmentsCodeFencesGuessSyntax = true
