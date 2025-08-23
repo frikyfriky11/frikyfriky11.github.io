@@ -80,3 +80,7 @@ url = "tags/"
 name = "About me"
 weight = 4
 url = "about/"
+
+[params.umami]
+siteID = "d20ca2bb-9fc5-444c-a29c-00bb33abd354"
+scriptURL = "umami.frikyfriky11.dev/script.js"
