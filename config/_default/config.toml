@@ -54,7 +54,7 @@ url = "https://www.linkedin.com/in/stefano-previato/"
 name = "RSS"
 icon = "fa fa-2x fa-rss"
 weight = 6
-url = "http://localhost:1313/index.xml"
+url = "https://frikyfriky11.github.io/index.xml"
 rel = "alternate"
 type = "application/rss+xml"
 
