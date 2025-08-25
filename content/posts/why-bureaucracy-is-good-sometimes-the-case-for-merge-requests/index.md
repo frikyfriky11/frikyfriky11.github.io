@@ -1,4 +1,3 @@
-```
 +++
 date = 2025-08-25T07:10:59+02:00
 title = "Why Bureaucracy is Good (Sometimes): The Case for Merge Requests"
@@ -7,7 +6,6 @@ authors = ["Stefano Previato"]
 tags = ["software development", "git", "teamwork", "collaboration", "code review"]
 categories = ["Career"]
 +++
-```
 
 A colleague of mine recently brought up a point I've heard before, but it still makes me think. "Merge requests feel like too much bureaucracy," they said. We were looking at an issue that was just a quick text change on the frontend, and the thought process was, "Why do I have to create a new branch, a draft merge request, commit, and then un-draft it just for this tiny thing?"
 
@@ -21,8 +19,6 @@ This is where the power of a standardized workflow comes in, and for us, that me
 
 Yes, for a small change, the overhead might seem like a lot. But is it really? We're talking about maybe two extra minutes of work per issue. In the grand scheme of things, that's a small price to pay for a clear, predictable workflow that saves hours of potential rework and confusion down the line.
 
----
-
 ### **More Than Just a Checkbox**
 
 Beyond visibility, an MR is our central hub for collaboration. It's the dedicated space where we can:
@@ -32,8 +28,6 @@ Beyond visibility, an MR is our central hub for collaboration. It's the dedicate
 - **See a linear history.** By using MRs, we can enforce a clean, understandable commit history. We can squash multiple small commits into one logical change when we merge. This ensures our `develop` branch doesn't look like a chaotic scribble, making it much easier to track down when and why a particular change was made.
 
 - **Run and track tests.** Most modern tools like GitLab or GitHub integrate with our testing suites. The moment you open an MR, it can automatically kick off a test run. You can watch the progress, see what passes and what fails, and fix any issues directly within the context of that same MR. It's an incredible feedback loop that saves us from the headache of broken builds.
-
----
 
 ### **Practice Makes Perfect, and So Does an MR**
 
