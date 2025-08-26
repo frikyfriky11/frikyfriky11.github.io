@@ -22,6 +22,7 @@ rtl = false
 colorScheme = "auto"
 hideColorSchemeToggle = false
 maxSeeAlsoItems = 5
+faviconSVG = "favicon.svg"
 customCSS = []
 customSCSS = []
 customJS = []
