@@ -1,9 +1,9 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Docker on frikyfriky11</title><link>https://frikyfriky11.github.io/tags/docker/</link><description>Recent content in Docker on frikyfriky11</description><generator>Hugo</generator><language>en</language><lastBuildDate>Tue, 21 Nov 2023 23:22:39 +0100</lastBuildDate><atom:link href="https://frikyfriky11.github.io/tags/docker/index.xml" rel="self" type="application/rss+xml"/><item><title>About Docker containers, compose projects, anonymous volumes and unrecognized changes</title><link>https://frikyfriky11.github.io/posts/about-docker-containers-compose-projects-anonymous-volumes-unrecognized-changes/</link><pubDate>Tue, 21 Nov 2023 23:22:39 +0100</pubDate><guid>https://frikyfriky11.github.io/posts/about-docker-containers-compose-projects-anonymous-volumes-unrecognized-changes/</guid><description>&lt;p>Today I spent a couple of hours trying to help a Data Engineering coworker find some nasty bug that was in hiding into one of our company workloads that are deployed using Docker.&lt;/p>
-&lt;h2 id="tldr">
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Docker on frikyfriky11</title><link>https://frikyfriky11.github.io/tags/docker/</link><description>Recent content in Docker on frikyfriky11</description><generator>Hugo</generator><language>en</language><lastBuildDate>Tue, 21 Nov 2023 23:22:39 +0100</lastBuildDate><atom:link href="https://frikyfriky11.github.io/tags/docker/index.xml" rel="self" type="application/rss+xml"/><item><title>About Docker containers, compose projects, anonymous volumes and unrecognized changes</title><link>https://frikyfriky11.github.io/posts/about-docker-containers-compose-projects-anonymous-volumes-unrecognized-changes/</link><pubDate>Tue, 21 Nov 2023 23:22:39 +0100</pubDate><guid>https://frikyfriky11.github.io/posts/about-docker-containers-compose-projects-anonymous-volumes-unrecognized-changes/</guid><description>&lt;p&gt;Today I spent a couple of hours trying to help a Data Engineering coworker find some nasty bug that was in hiding into one of our company workloads that are deployed using Docker.&lt;/p&gt;
+&lt;h2 id="tldr"&gt;
  TLDR
- &lt;a class="heading-link" href="#tldr">
- &lt;i class="fa-solid fa-link" aria-hidden="true" title="Link to heading">&lt;/i>
- &lt;span class="sr-only">Link to heading&lt;/span>
- &lt;/a>
-&lt;/h2>
-&lt;p>A Docker deployment bug caused files not to update despite successful builds. It stemmed from an inherited VOLUME directive creating an anonymous volume, persisting changes. Solution: Add &lt;code>docker compose down -v&lt;/code> in the deployment pipeline before &lt;code>docker compose up&lt;/code>.&lt;/p></description></item></channel></rss>
+ &lt;a class="heading-link" href="#tldr"&gt;
+ &lt;i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"&gt;&lt;/i&gt;
+ &lt;span class="sr-only"&gt;Link to heading&lt;/span&gt;
+ &lt;/a&gt;
+&lt;/h2&gt;
+&lt;p&gt;A Docker deployment bug caused files not to update despite successful builds. It stemmed from an inherited VOLUME directive creating an anonymous volume, persisting changes. Solution: Add &lt;code&gt;docker compose down -v&lt;/code&gt; in the deployment pipeline before &lt;code&gt;docker compose up&lt;/code&gt;.&lt;/p&gt;</description></item></channel></rss>
