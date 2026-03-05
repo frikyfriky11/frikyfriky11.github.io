@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Homelab on frikyfriky11</title><link>https://frikyfriky11.github.io/tags/homelab/</link><description>Recent content in Homelab on frikyfriky11</description><generator>Hugo</generator><language>en</language><lastBuildDate>Thu, 05 Mar 2026 19:25:08 +0100</lastBuildDate><atom:link href="https://frikyfriky11.github.io/tags/homelab/index.xml" rel="self" type="application/rss+xml"/><item><title>Fixing ERR_ECH_FALLBACK_CERTIFICATE_INVALID with Split-Horizon DNS and Cloudflare</title><link>https://frikyfriky11.github.io/posts/fixing-err_ech_fallback_certificate_invalid-with-split-horizon-dns-and-cloudflare/</link><pubDate>Thu, 05 Mar 2026 19:25:08 +0100</pubDate><guid>https://frikyfriky11.github.io/posts/fixing-err_ech_fallback_certificate_invalid-with-split-horizon-dns-and-cloudflare/</guid><description>&lt;h2 id="tldr"&gt;
+ TL;DR
+ &lt;a class="heading-link" href="#tldr"&gt;
+ &lt;i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"&gt;&lt;/i&gt;
+ &lt;span class="sr-only"&gt;Link to heading&lt;/span&gt;
+ &lt;/a&gt;
+&lt;/h2&gt;
+&lt;p&gt;If you run a split-horizon DNS setup (local DNS overrides + Cloudflare tunnels for external access) and started seeing &lt;code&gt;ERR_ECH_FALLBACK_CERTIFICATE_INVALID&lt;/code&gt; in Chrome, here&amp;rsquo;s what&amp;rsquo;s happening and how to fix it:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Cloudflare automatically publishes &lt;strong&gt;ECH configuration&lt;/strong&gt; inside DNS type 65 (HTTPS) records for all proxied domains&lt;/li&gt;
+&lt;li&gt;Chrome fetches these records and tries to use ECH when connecting — even if your local DNS is sending it to an internal server that knows nothing about ECH&lt;/li&gt;
+&lt;li&gt;The mismatch causes the error&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The fix&lt;/strong&gt;: disable ECH for your zones via the Cloudflare API (works on all plans, including free):&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;curl -s -X PATCH &lt;span style="color:#f1fa8c"&gt;&amp;#34;https://api.cloudflare.com/client/v4/zones/{YOUR_ZONE_ID}/settings/ech&amp;#34;&lt;/span&gt; &lt;span style="color:#f1fa8c"&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -H &lt;span style="color:#f1fa8c"&gt;&amp;#34;X-Auth-Email: you@example.com&amp;#34;&lt;/span&gt; &lt;span style="color:#f1fa8c"&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -H &lt;span style="color:#f1fa8c"&gt;&amp;#34;X-Auth-Key: YOUR_GLOBAL_API_KEY&amp;#34;&lt;/span&gt; &lt;span style="color:#f1fa8c"&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -H &lt;span style="color:#f1fa8c"&gt;&amp;#34;Content-Type: application/json&amp;#34;&lt;/span&gt; &lt;span style="color:#f1fa8c"&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; --data &lt;span style="color:#f1fa8c"&gt;&amp;#39;{&amp;#34;value&amp;#34;:&amp;#34;off&amp;#34;}&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Run this once per zone and you&amp;rsquo;re done.&lt;/p&gt;</description></item></channel></rss>
