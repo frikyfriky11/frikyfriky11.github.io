@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Apt on frikyfriky11</title><link>https://frikyfriky11.github.io/tags/apt/</link><description>Recent content in Apt on frikyfriky11</description><generator>Hugo</generator><language>en</language><lastBuildDate>Wed, 27 May 2026 20:10:00 +0200</lastBuildDate><atom:link href="https://frikyfriky11.github.io/tags/apt/index.xml" rel="self" type="application/rss+xml"/><item><title>The Bath-Time Bug: When unattended-upgrades Pulls the .NET Runtime Out From Under You</title><link>https://frikyfriky11.github.io/posts/the-bath-time-bug-when-unattended-upgrades-swaps-your-dotnet-runtime/</link><pubDate>Wed, 27 May 2026 20:10:00 +0200</pubDate><guid>https://frikyfriky11.github.io/posts/the-bath-time-bug-when-unattended-upgrades-swaps-your-dotnet-runtime/</guid><description>&lt;h2 id="tldr"&gt;
+ TL;DR
+ &lt;a class="heading-link" href="#tldr"&gt;
+ &lt;i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"&gt;&lt;/i&gt;
+ &lt;span class="sr-only"&gt;Link to heading&lt;/span&gt;
+ &lt;/a&gt;
+&lt;/h2&gt;
+&lt;p&gt;If a long-running .NET dev server suddenly throws something like:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-gdscript3" data-lang="gdscript3"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;System&lt;span style="color:#ff79c6"&gt;.&lt;/span&gt;IO&lt;span style="color:#ff79c6"&gt;.&lt;/span&gt;FileNotFoundException: Could &lt;span style="color:#ff79c6"&gt;not&lt;/span&gt; &lt;span style="color:#8be9fd;font-style:italic"&gt;load&lt;/span&gt; file &lt;span style="color:#ff79c6"&gt;or&lt;/span&gt; assembly
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f1fa8c"&gt;&amp;#39;System.Drawing.Primitives, Version=8.0.0.0, ...&amp;#39;&lt;/span&gt;&lt;span style="color:#ff79c6"&gt;.&lt;/span&gt; The system cannot find the file specified&lt;span style="color:#ff79c6"&gt;.&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;…for an assembly you can plainly see exists on disk, the most likely culprit is this:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Ubuntu&amp;rsquo;s &lt;code&gt;unattended-upgrades&lt;/code&gt; silently upgraded your .NET runtime (e.g. &lt;code&gt;8.0.26&lt;/code&gt; → &lt;code&gt;8.0.27&lt;/code&gt;) &lt;strong&gt;while your server was running&lt;/strong&gt;.&lt;/li&gt;
+&lt;li&gt;The old runtime folder it was bound to got deleted out from under it.&lt;/li&gt;
+&lt;li&gt;.NET loads many framework assemblies &lt;strong&gt;lazily&lt;/strong&gt;, so everything looked fine until the &lt;em&gt;first&lt;/em&gt; time a code path needed that one specific assembly — and then it went looking in a folder that no longer existed.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;The fix:&lt;/strong&gt; restart your &lt;code&gt;dotnet run&lt;/code&gt;. No code change. That&amp;rsquo;s it. The rest of this post is &lt;em&gt;how I figured that out&lt;/em&gt;, because the method is more useful than the fix.&lt;/p&gt;</description></item></channel></rss>
